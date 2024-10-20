@@ -69,35 +69,22 @@ class AttributeNode extends Node {
 
 		const attributeName = this.getAttributeName( builder );
 		const nodeType = this.getNodeType( builder );
-		const geometryAttribute = builder.hasGeometryAttribute( attributeName );
 
-		if ( geometryAttribute === true ) {
+		const attributeType = nodeType;
 
-			const attribute = builder.geometry.getAttribute( attributeName );
-			const attributeType = builder.getTypeFromAttribute( attribute );
+		const nodeAttribute = builder.getAttribute( attributeName, attributeType );
 
-			const nodeAttribute = builder.getAttribute( attributeName, attributeType );
+		if ( builder.shaderStage === 'vertex' ) {
 
-			if ( builder.shaderStage === 'vertex' ) {
-
-				return builder.format( nodeAttribute.name, attributeType, nodeType );
-
-			} else {
-
-				const nodeVarying = varying( this );
-
-				return nodeVarying.build( builder, nodeType );
-
-			}
+			return builder.format( nodeAttribute.name, attributeType, nodeType );
 
 		} else {
 
-			console.warn( `AttributeNode: Vertex attribute "${ attributeName }" not found on geometry.` );
+			const nodeVarying = varying( this );
 
-			return builder.generateConst( nodeType );
+			return nodeVarying.build( builder, nodeType );
 
 		}
-
 	}
 
 	serialize( data ) {
