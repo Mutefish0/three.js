@@ -59,7 +59,7 @@ class UniformsGroup extends UniformBuffer {
 
 			const byteLength = this.byteLength;
 
-			buffer = new Float32Array( new ArrayBuffer( byteLength ) );
+			buffer = new Float32Array( new SharedArrayBuffer( byteLength ) );
 
 			this._buffer = buffer;
 
