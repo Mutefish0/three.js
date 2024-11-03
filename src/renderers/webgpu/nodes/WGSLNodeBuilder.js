@@ -392,7 +392,7 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 			} else {
 
-				return node.groupNode.name + '.' + name;
+				return name;
 
 			}
 
@@ -475,6 +475,10 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 	getUniformFromNode( node, type, shaderStage, name = null ) {
 
+		const getBindingLayout = this.renderer.getBindingLayout;
+
+		const layout = getBindingLayout(node.name);
+
 		const uniformNode = super.getUniformFromNode( node, type, shaderStage, name );
 		const nodeData = this.getDataFromNode( node, shaderStage, this.globalCache );
 
@@ -483,7 +487,7 @@ class WGSLNodeBuilder extends NodeBuilder {
 			let uniformGPU;
 
 			const group = node.groupNode;
-			const groupName = group.name;
+			const groupName = layout.group;
 
 			const bindings = this.getBindGroupArray( groupName, shaderStage );
 
@@ -537,20 +541,27 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 			} else {
 
-				const uniformsStage = this.uniformGroups[ shaderStage ] || ( this.uniformGroups[ shaderStage ] = {} );
+				// const uniformsStage = this.uniformGroups[ shaderStage ] || ( this.uniformGroups[ shaderStage ] = {} );
 
-				let uniformsGroup = uniformsStage[ groupName ];
+				// let uniformsGroup = uniformsStage[ groupName ];
 
-				if ( uniformsGroup === undefined ) {
+				// if ( uniformsGroup === undefined ) {
 
-					uniformsGroup = new NodeUniformsGroup( groupName, group );
-					uniformsGroup.setVisibility( gpuShaderStageLib[ shaderStage ] );
+				// 	uniformsGroup = new NodeUniformsGroup( groupName, group );
+				// 	uniformsGroup.setVisibility( gpuShaderStageLib[ shaderStage ] );
 
-					uniformsStage[ groupName ] = uniformsGroup;
+				// 	uniformsStage[ groupName ] = uniformsGroup;
 
-					bindings.push( uniformsGroup );
+				// 	bindings.push( uniformsGroup );
 
-				}
+				// }
+
+				const uniformsGroup = new NodeUniformsGroup( groupName, group );
+				uniformsGroup.setVisibility( gpuShaderStageLib[ shaderStage ] );
+
+				//uniformsStage[ groupName ] = uniformsGroup;
+
+				bindings.push( uniformsGroup );
 
 				uniformGPU = this.getNodeUniform( uniformNode, type );
 
@@ -989,6 +1000,7 @@ ${ flowData.code }
 	}
 
 	getUniforms( shaderStage ) {
+		const getBindingLayout = this.renderer.getBindingLayout;
 
 		const uniforms = this.uniforms[ shaderStage ];
 
@@ -999,6 +1011,8 @@ ${ flowData.code }
 
 		for ( const uniform of uniforms ) {
 
+			const layout = getBindingLayout(uniform.name);
+
 			const groupName = uniform.groupNode.name;
 			const uniformIndexes = this.bindingsIndexes[ groupName ];
 
@@ -1008,13 +1022,15 @@ ${ flowData.code }
 
 				if ( shaderStage === 'fragment' && this.isUnfilterable( texture ) === false && uniform.node.isStorageTextureNode !== true ) {
 
+					const layout = getBindingLayout(`${ uniform.name }_sampler`);
+
 					if ( texture.isDepthTexture === true && texture.compareFunction !== null ) {
 
-						bindingSnippets.push( `@binding( ${ uniformIndexes.binding ++ } ) @group( ${ uniformIndexes.group } ) var ${ uniform.name }_sampler : sampler_comparison;` );
+						bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name }_sampler : sampler_comparison;` );
 
 					} else {
 
-						bindingSnippets.push( `@binding( ${ uniformIndexes.binding ++ } ) @group( ${ uniformIndexes.group } ) var ${ uniform.name }_sampler : sampler;` );
+						bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name }_sampler : sampler;` );
 
 					}
 
@@ -1065,7 +1081,7 @@ ${ flowData.code }
 
 				}
 
-				bindingSnippets.push( `@binding( ${ uniformIndexes.binding ++ } ) @group( ${ uniformIndexes.group } ) var ${ uniform.name } : ${ textureType };` );
+				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name } : ${ textureType };` );
 
 			} else if ( uniform.type === 'buffer' || uniform.type === 'storageBuffer' ) {
 
@@ -1081,17 +1097,20 @@ ${ flowData.code }
 				bufferSnippets.push( this._getWGSLStructBinding( 'NodeBuffer_' + bufferNode.id, bufferSnippet, bufferAccessMode, uniformIndexes.binding ++, uniformIndexes.group ) );
 
 			} else {
-
 				const vectorType = this.getType( this.getVectorType( uniform.type ) );
-				const groupName = uniform.groupNode.name;
 
-				const group = uniformGroups[ groupName ] || ( uniformGroups[ groupName ] = {
-					index: uniformIndexes.binding ++,
-					id: uniformIndexes.group,
-					snippets: []
-				} );
+				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var<uniform> ${ uniform.name } : ${ vectorType };` );
 
-				group.snippets.push( `\t${ uniform.name } : ${ vectorType }` );
+				// const vectorType = this.getType( this.getVectorType( uniform.type ) );
+				// const groupName = layout.group;
+
+				// const group = uniformGroups[ groupName ] || ( uniformGroups[ groupName ] = {
+				// 	index: layout.binding,
+				// 	id: layout.group,
+				// 	snippets: []
+				// } );
+
+				// group.snippets.push( `\t${ uniform.name } : ${ vectorType }` );
 
 			}
 
