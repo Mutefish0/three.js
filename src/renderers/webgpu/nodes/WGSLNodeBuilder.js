@@ -477,7 +477,7 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 		const getBindingLayout = this.renderer.getBindingLayout;
 
-		const layout = getBindingLayout(node.name);
+		const layout = getBindingLayout( node.name );
 
 		const uniformNode = super.getUniformFromNode( node, type, shaderStage, name );
 		const nodeData = this.getDataFromNode( node, shaderStage, this.globalCache );
@@ -541,25 +541,8 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 			} else {
 
-				// const uniformsStage = this.uniformGroups[ shaderStage ] || ( this.uniformGroups[ shaderStage ] = {} );
-
-				// let uniformsGroup = uniformsStage[ groupName ];
-
-				// if ( uniformsGroup === undefined ) {
-
-				// 	uniformsGroup = new NodeUniformsGroup( groupName, group );
-				// 	uniformsGroup.setVisibility( gpuShaderStageLib[ shaderStage ] );
-
-				// 	uniformsStage[ groupName ] = uniformsGroup;
-
-				// 	bindings.push( uniformsGroup );
-
-				// }
-
-				const uniformsGroup = new NodeUniformsGroup( groupName, group );
+				const uniformsGroup = new NodeUniformsGroup( uniformNode.name, group );
 				uniformsGroup.setVisibility( gpuShaderStageLib[ shaderStage ] );
-
-				//uniformsStage[ groupName ] = uniformsGroup;
 
 				bindings.push( uniformsGroup );
 
@@ -1000,6 +983,7 @@ ${ flowData.code }
 	}
 
 	getUniforms( shaderStage ) {
+
 		const getBindingLayout = this.renderer.getBindingLayout;
 
 		const uniforms = this.uniforms[ shaderStage ];
@@ -1011,7 +995,7 @@ ${ flowData.code }
 
 		for ( const uniform of uniforms ) {
 
-			const layout = getBindingLayout(uniform.name);
+			const layout = getBindingLayout( uniform.name );
 
 			const groupName = uniform.groupNode.name;
 			const uniformIndexes = this.bindingsIndexes[ groupName ];
@@ -1022,7 +1006,7 @@ ${ flowData.code }
 
 				if ( shaderStage === 'fragment' && this.isUnfilterable( texture ) === false && uniform.node.isStorageTextureNode !== true ) {
 
-					const layout = getBindingLayout(`${ uniform.name }_sampler`);
+					const layout = getBindingLayout( `${ uniform.name }_sampler` );
 
 					if ( texture.isDepthTexture === true && texture.compareFunction !== null ) {
 
@@ -1097,20 +1081,10 @@ ${ flowData.code }
 				bufferSnippets.push( this._getWGSLStructBinding( 'NodeBuffer_' + bufferNode.id, bufferSnippet, bufferAccessMode, uniformIndexes.binding ++, uniformIndexes.group ) );
 
 			} else {
+
 				const vectorType = this.getType( this.getVectorType( uniform.type ) );
 
 				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var<uniform> ${ uniform.name } : ${ vectorType };` );
-
-				// const vectorType = this.getType( this.getVectorType( uniform.type ) );
-				// const groupName = layout.group;
-
-				// const group = uniformGroups[ groupName ] || ( uniformGroups[ groupName ] = {
-				// 	index: layout.binding,
-				// 	id: layout.group,
-				// 	snippets: []
-				// } );
-
-				// group.snippets.push( `\t${ uniform.name } : ${ vectorType }` );
 
 			}
 
