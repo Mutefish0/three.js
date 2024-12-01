@@ -192,6 +192,10 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 			} else {
 
+				if (texture.samplerName) {
+					return `textureSample( ${ textureProperty }, ${ texture.samplerName }, ${ uvSnippet } )`;
+				}
+
 				return `textureSample( ${ textureProperty }, ${ textureProperty }_sampler, ${ uvSnippet } )`;
 
 			}
@@ -514,7 +518,7 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 				if ( shaderStage === 'fragment' && this.isUnfilterable( node.value ) === false && texture.store === false ) {
 
-					const sampler = new NodeSampler( `${uniformNode.name}_sampler`, uniformNode.node, group );
+					const sampler = new NodeSampler( uniformNode.value.samplerName || `${uniformNode.name}_sampler`, uniformNode.node, group );
 					sampler.setVisibility( gpuShaderStageLib[ shaderStage ] );
 
 					bindings.push( sampler, texture );
@@ -1003,10 +1007,11 @@ ${ flowData.code }
 			if ( uniform.type === 'texture' || uniform.type === 'cubeTexture' || uniform.type === 'storageTexture' || uniform.type === 'texture3D' ) {
 
 				const texture = uniform.node.value;
+				const samplerName = texture.samplerName || `${ uniform.name }_sampler`;
 
 				if ( shaderStage === 'fragment' && this.isUnfilterable( texture ) === false && uniform.node.isStorageTextureNode !== true ) {
 
-					const layout = getBindingLayout( `${ uniform.name }_sampler` );
+					const layout = getBindingLayout( samplerName );
 
 					if ( texture.isDepthTexture === true && texture.compareFunction !== null ) {
 
@@ -1014,7 +1019,7 @@ ${ flowData.code }
 
 					} else {
 
-						bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name }_sampler : sampler;` );
+						bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ samplerName } : sampler;` );
 
 					}
 
