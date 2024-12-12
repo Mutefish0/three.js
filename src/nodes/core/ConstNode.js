@@ -13,6 +13,7 @@ class ConstNode extends InputNode {
 		super( value, nodeType );
 
 		this.isConstNode = true;
+		this.uuid = `${nodeType || 'const'}(${value})`;
 
 	}
 

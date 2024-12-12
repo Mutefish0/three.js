@@ -14,6 +14,8 @@ class JoinNode extends TempNode {
 
 		this.nodes = nodes;
 
+		this.uuid = `${nodeType}(${nodes.map( n => n.uuid ).join( ',' )})`;
+
 	}
 
 	getNodeType( builder ) {

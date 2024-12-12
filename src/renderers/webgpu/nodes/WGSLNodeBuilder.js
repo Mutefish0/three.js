@@ -822,6 +822,8 @@ ${ flowData.code }
 
 	getAttributes( shaderStage ) {
 
+	    const getAttributeLayout = this.renderer.getAttributeLayout;
+
 		const snippets = [];
 
 		if ( shaderStage === 'compute' ) {
@@ -854,7 +856,9 @@ ${ flowData.code }
 				const name = attribute.name;
 				const type = this.getType( attribute.type );
 
-				snippets.push( `@location( ${index} ) ${ name } : ${ type }` );
+				const bindingPoint = getAttributeLayout( name );
+
+				snippets.push( `@location( ${bindingPoint} ) ${ name } : ${ type }` );
 
 			}
 
