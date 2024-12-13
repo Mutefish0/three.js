@@ -31,6 +31,7 @@ class OperatorNode extends TempNode {
 		this.op = op;
 		this.aNode = aNode;
 		this.bNode = bNode;
+		this.uuid = `${aNode.uuid}${op}${bNode.uuid}`;
 
 	}
 

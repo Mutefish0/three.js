@@ -17,6 +17,10 @@ class AttributeNode extends Node {
 
 		this._attributeName = attributeName;
 
+		const id = ( ( Date.now() + Math.random() * 1000 ) % 100000000 ).toString( 36 );
+
+		this.uuid = `attribute_${attributeName || ''}_${id}`;
+
 	}
 
 	getHash( builder ) {
