@@ -20,6 +20,8 @@ class SplitNode extends Node {
 
 		this.isSplitNode = true;
 
+		this.uuid = `${node.uuid}.${components}`;
+
 	}
 
 	getVectorLength() {

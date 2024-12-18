@@ -192,8 +192,10 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 			} else {
 
-				if (texture.samplerName) {
+				if ( texture.samplerName ) {
+
 					return `textureSample( ${ textureProperty }, ${ texture.samplerName }, ${ uvSnippet } )`;
+
 				}
 
 				return `textureSample( ${ textureProperty }, ${ textureProperty }_sampler, ${ uvSnippet } )`;
@@ -1015,7 +1017,7 @@ ${ flowData.code }
 
 				if ( shaderStage === 'fragment' && this.isUnfilterable( texture ) === false && uniform.node.isStorageTextureNode !== true ) {
 
-					const layout = getBindingLayout( samplerName );
+					const layout = getBindingLayout( samplerName, true );
 
 					if ( texture.isDepthTexture === true && texture.compareFunction !== null ) {
 

@@ -17,7 +17,10 @@ class AttributeNode extends Node {
 
 		this._attributeName = attributeName;
 
-		const id = ( ( Date.now() + Math.random() * 1000 ) % 100000000 ).toString( 36 );
+		const id = (
+			( Date.now() % 10000000 ) +
+			Math.ceil( Math.random() * 100000 )
+		  ).toString( 36 );
 
 		this.uuid = `attribute_${attributeName || ''}_${id}`;
 
@@ -89,6 +92,7 @@ class AttributeNode extends Node {
 			return nodeVarying.build( builder, nodeType );
 
 		}
+
 	}
 
 	serialize( data ) {
