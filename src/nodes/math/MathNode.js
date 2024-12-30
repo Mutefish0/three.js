@@ -20,6 +20,30 @@ class MathNode extends TempNode {
 		this.bNode = bNode;
 		this.cNode = cNode;
 
+		if ( method === MathNode.NEGATE ) {
+
+			this.uuid = `(-${aNode.uuid})`;
+
+		} else if ( method === MathNode.ONE_MINUS ) {
+
+			this.uuid = `(1.0-${aNode.uuid})`;
+
+		} else if ( method === MathNode.RECIPROCAL ) {
+
+			this.uuid = `(1.0/${aNode.uuid})`;
+
+		} else if ( method === MathNode.DIFFERENCE ) {
+
+			this.uuid = `abs(${aNode.uuid}-${bNode.uuid})`;
+
+		} else {
+
+			const uuids = [ aNode && aNode.uuid, bNode && bNode.uuid, cNode && cNode.uuid ].filter( Boolean ).join( ',' );
+
+			this.uuid = `${method}(${uuids})`;
+
+		}
+
 	}
 
 	getInputType( builder ) {
