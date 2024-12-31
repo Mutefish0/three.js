@@ -198,6 +198,16 @@ class MathNode extends TempNode {
 					c.build( builder, builder.getTypeLength( c.getNodeType( builder ) ) === 1 ? 'float' : inputType )
 				);
 
+			} else if ( method === MathNode.select ) {
+
+			  const typeLength = builder.getTypeLength( inputType );
+
+				params.push(
+					a.build( builder, inputType ),
+					b.build( builder, inputType ),
+					c.build( builder, typeLength > 1 ? `bvec${ typeLength }` : 'bool' )
+				);
+
 			} else {
 
 				params.push( a.build( builder, inputType ) );
@@ -263,6 +273,7 @@ MathNode.DFDX = 'dFdx';
 MathNode.DFDY = 'dFdy';
 MathNode.dpdxFine = 'dpdyFine';
 MathNode.dpdyFine = 'dpdxFine';
+MathNode.select = 'select';
 MathNode.ROUND = 'round';
 MathNode.RECIPROCAL = 'reciprocal';
 MathNode.TRUNC = 'trunc';
