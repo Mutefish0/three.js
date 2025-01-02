@@ -182,38 +182,6 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 	}
 
-	_generateTextureSample( texture, textureProperty, uvSnippet, depthSnippet, shaderStage = this.shaderStage ) {
-
-		if ( shaderStage === 'fragment' ) {
-
-			if ( depthSnippet ) {
-
-				return `textureSample( ${ textureProperty }, ${ textureProperty }_sampler, ${ uvSnippet }, ${ depthSnippet } )`;
-
-			} else {
-
-				if ( texture.samplerName ) {
-
-					return `textureSample( ${ textureProperty }, ${ texture.samplerName }, ${ uvSnippet } )`;
-
-				}
-
-				return `textureSample( ${ textureProperty }, ${ textureProperty }_sampler, ${ uvSnippet } )`;
-
-			}
-
-		} else if ( this.isFilteredTexture( texture ) ) {
-
-			return this.generateFilteredTexture( texture, textureProperty, uvSnippet );
-
-		} else {
-
-			return this.generateTextureLod( texture, textureProperty, uvSnippet, '0' );
-
-		}
-
-	}
-
 	_generateVideoSample( textureProperty, uvSnippet, shaderStage = this.shaderStage ) {
 
 		if ( shaderStage === 'fragment' ) {
@@ -254,30 +222,6 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 	}
 
-	generateTextureLod( texture, textureProperty, uvSnippet, levelSnippet = '0' ) {
-
-		this._include( 'repeatWrapping' );
-
-		const dimension = texture.isMultisampleRenderTargetTexture === true ? `textureDimensions( ${ textureProperty } )` : `textureDimensions( ${ textureProperty }, 0 )`;
-
-		return `textureLoad( ${ textureProperty }, tsl_repeatWrapping( ${ uvSnippet }, ${ dimension } ), i32( ${ levelSnippet } ) )`;
-
-	}
-
-	generateTextureLoad( texture, textureProperty, uvIndexSnippet, depthSnippet, levelSnippet = '0u' ) {
-
-		if ( depthSnippet ) {
-
-			return `textureLoad( ${ textureProperty }, ${ uvIndexSnippet }, ${ depthSnippet }, ${ levelSnippet } )`;
-
-		} else {
-
-			return `textureLoad( ${ textureProperty }, ${ uvIndexSnippet }, ${ levelSnippet } )`;
-
-		}
-
-	}
-
 	generateTextureStore( texture, textureProperty, uvIndexSnippet, valueSnippet ) {
 
 		return `textureStore( ${ textureProperty }, ${ uvIndexSnippet }, ${ valueSnippet } )`;
@@ -287,28 +231,6 @@ class WGSLNodeBuilder extends NodeBuilder {
 	isUnfilterable( texture ) {
 
 		return this.getComponentTypeFromTexture( texture ) !== 'float' || ( ! this.isAvailable( 'float32Filterable' ) && texture.isDataTexture === true && texture.type === FloatType ) || texture.isMultisampleRenderTargetTexture === true;
-
-	}
-
-	generateTexture( texture, textureProperty, uvSnippet, depthSnippet, shaderStage = this.shaderStage ) {
-
-		let snippet = null;
-
-		if ( texture.isVideoTexture === true ) {
-
-			snippet = this._generateVideoSample( textureProperty, uvSnippet, shaderStage );
-
-		} else if ( this.isUnfilterable( texture ) ) {
-
-			snippet = this.generateTextureLod( texture, textureProperty, uvSnippet, '0', depthSnippet, shaderStage );
-
-		} else {
-
-			snippet = this._generateTextureSample( texture, textureProperty, uvSnippet, depthSnippet, shaderStage );
-
-		}
-
-		return snippet;
 
 	}
 
@@ -497,43 +419,40 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 			const bindings = this.getBindGroupArray( groupName, shaderStage );
 
-			if ( type === 'texture' || type === 'cubeTexture' || type === 'storageTexture' || type === 'texture3D' ) {
+			const visibility = gpuShaderStageLib[ shaderStage ];
 
-				let texture = null;
+			if (type === 'texture') {
+				const textureGPU = {
+					name: node.name,
+				 	type,
+					visibility,
+					isTexture: true,
+					node,
+					groupNode: {
+						shared: false,
+					}
+				};
 
-				if ( type === 'texture' || type === 'storageTexture' ) {
+				bindings.push( textureGPU );
 
-					texture = new NodeSampledTexture( uniformNode.name, uniformNode.node, group, node.access ? node.access : null );
+				uniformGPU = [ textureGPU ];
 
-				} else if ( type === 'cubeTexture' ) {
+			} else if (type === 'sampler') {
 
-					texture = new NodeSampledCubeTexture( uniformNode.name, uniformNode.node, group, node.access ? node.access : null );
+				const samplerGPU = {
+				   name: node.name,
+				   type,
+				   visibility,
+				   isSampler: true,
+				   node,
+				   groupNode: {
+					shared: false,
+				  }
+			   };
 
-				} else if ( type === 'texture3D' ) {
+			   bindings.push( samplerGPU );
 
-					texture = new NodeSampledTexture3D( uniformNode.name, uniformNode.node, group, node.access ? node.access : null );
-
-				}
-
-				texture.store = node.isStorageTextureNode === true;
-				texture.setVisibility( gpuShaderStageLib[ shaderStage ] );
-
-				if ( shaderStage === 'fragment' && this.isUnfilterable( node.value ) === false && texture.store === false ) {
-
-					const sampler = new NodeSampler( uniformNode.value.samplerName || `${uniformNode.name}_sampler`, uniformNode.node, group );
-					sampler.setVisibility( gpuShaderStageLib[ shaderStage ] );
-
-					bindings.push( sampler, texture );
-
-					uniformGPU = [ sampler, texture ];
-
-				} else {
-
-					bindings.push( texture );
-
-					uniformGPU = [ texture ];
-
-				}
+			   uniformGPU = [ samplerGPU ];
 
 			} else if ( type === 'buffer' || type === 'storageBuffer' ) {
 
@@ -1010,73 +929,15 @@ ${ flowData.code }
 			const groupName = uniform.groupNode.name;
 			const uniformIndexes = this.bindingsIndexes[ groupName ];
 
-			if ( uniform.type === 'texture' || uniform.type === 'cubeTexture' || uniform.type === 'storageTexture' || uniform.type === 'texture3D' ) {
+			if ( uniform.type === 'texture' ) {
 
-				const texture = uniform.node.value;
-				const samplerName = texture.samplerName || `${ uniform.name }_sampler`;
+				const textureValue = uniform.node.value;
 
-				if ( shaderStage === 'fragment' && this.isUnfilterable( texture ) === false && uniform.node.isStorageTextureNode !== true ) {
+				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name } : ${ textureValue.shaderType };` );
 
-					const layout = getBindingLayout( samplerName, true );
+			} else if (uniform.type === 'sampler') {
 
-					if ( texture.isDepthTexture === true && texture.compareFunction !== null ) {
-
-						bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name }_sampler : sampler_comparison;` );
-
-					} else {
-
-						bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ samplerName } : sampler;` );
-
-					}
-
-				}
-
-				let textureType;
-
-				let multisampled = '';
-
-				if ( texture.isMultisampleRenderTargetTexture === true ) {
-
-					multisampled = '_multisampled';
-
-				}
-
-				if ( texture.isCubeTexture === true ) {
-
-					textureType = 'texture_cube<f32>';
-
-				} else if ( texture.isDataArrayTexture === true || texture.isCompressedArrayTexture === true ) {
-
-					textureType = 'texture_2d_array<f32>';
-
-				} else if ( texture.isDepthTexture === true ) {
-
-					textureType = `texture_depth${multisampled}_2d`;
-
-				} else if ( texture.isVideoTexture === true ) {
-
-					textureType = 'texture_external';
-
-				} else if ( texture.isData3DTexture === true ) {
-
-					textureType = 'texture_3d<f32>';
-
-				} else if ( uniform.node.isStorageTextureNode === true ) {
-
-					const format = getFormat( texture );
-					const access = this.getStorageAccess( uniform.node );
-
-					textureType = `texture_storage_2d<${ format }, ${ access }>`;
-
-				} else {
-
-					const componentPrefix = this.getComponentTypeFromTexture( texture ).charAt( 0 );
-
-					textureType = `texture${multisampled}_2d<${ componentPrefix }32>`;
-
-				}
-
-				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name } : ${ textureType };` );
+				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name } : ${uniform.node.samplerType};` );
 
 			} else if ( uniform.type === 'buffer' || uniform.type === 'storageBuffer' ) {
 
