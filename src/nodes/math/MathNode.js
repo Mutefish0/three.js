@@ -274,6 +274,7 @@ MathNode.DFDY = 'dFdy';
 MathNode.dpdxFine = 'dpdyFine';
 MathNode.dpdyFine = 'dpdxFine';
 MathNode.select = 'select';
+MathNode.reverseBits = 'reverseBits';
 MathNode.ROUND = 'round';
 MathNode.RECIPROCAL = 'reciprocal';
 MathNode.TRUNC = 'trunc';
@@ -348,6 +349,7 @@ export const trunc = /*@__PURE__*/ nodeProxy( MathNode, MathNode.TRUNC );
 export const fwidth = /*@__PURE__*/ nodeProxy( MathNode, MathNode.FWIDTH );
 export const bitcast = /*@__PURE__*/ nodeProxy( MathNode, MathNode.BITCAST );
 export const transpose = /*@__PURE__*/ nodeProxy( MathNode, MathNode.TRANSPOSE );
+export const reverseBits = /*@__PURE__*/ nodeProxy( MathNode, MathNode.reverseBits );
 
 export const atan2 = /*@__PURE__*/ nodeProxy( MathNode, MathNode.ATAN2 );
 export const min = /*@__PURE__*/ nodeProxy( MathNode, MathNode.MIN );
