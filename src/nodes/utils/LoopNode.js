@@ -39,7 +39,8 @@ class LoopNode extends Node {
 			const param = this.params[ i ];
 
 			const name = ( param.isNode !== true && param.name ) || this.getVarName( i );
-			const type = ( param.isNode !== true && param.type ) || 'int';
+			
+			const type = param.nodeType === 'uint' ? 'uint' : ( param.isNode !== true && param.type ) ||  'int';
 
 			inputs[ name ] = expression( name, type );
 
@@ -87,7 +88,7 @@ class LoopNode extends Node {
 
 			if ( param.isNode ) {
 
-				type = 'int';
+				type = param.nodeType === 'uint' ? 'uint' : 'int';
 				name = this.getVarName( i );
 				start = '0';
 				end = param.build( builder, type );
@@ -95,7 +96,7 @@ class LoopNode extends Node {
 
 			} else {
 
-				type = param.type || 'int';
+				type = param.type || param.nodeType === 'uint' ? 'uint' : 'int';
 				name = param.name || this.getVarName( i );
 				start = param.start;
 				end = param.end;
