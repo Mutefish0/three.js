@@ -405,7 +405,7 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 		const getBindingLayout = this.renderer.getBindingLayout;
 
-		const layout = getBindingLayout( node.name );
+		const layout = getBindingLayout( node.name, node );
 
 		const uniformNode = super.getUniformFromNode( node, type, shaderStage, name );
 		const nodeData = this.getDataFromNode( node, shaderStage, this.globalCache );
@@ -924,7 +924,7 @@ ${ flowData.code }
 
 		for ( const uniform of uniforms ) {
 
-			const layout = getBindingLayout( uniform.name );
+			const layout = getBindingLayout( uniform.name, uniform.node );
 
 			const groupName = uniform.groupNode.name;
 			const uniformIndexes = this.bindingsIndexes[ groupName ];
@@ -935,7 +935,7 @@ ${ flowData.code }
 
 				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name } : ${ textureValue.shaderType };` );
 
-			} else if (uniform.type === 'sampler') {
+			} else if ( uniform.type === 'sampler' ) {
 
 				bindingSnippets.push( `@binding( ${ layout.binding } ) @group( ${ layout.group } ) var ${ uniform.name } : ${uniform.node.samplerType};` );
 
