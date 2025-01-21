@@ -253,15 +253,21 @@ class ShaderCallNodeInternal extends Node {
 		this.shaderNode = shaderNode;
 		this.inputNodes = inputNodes;
 
-		const inputIds = {};
+		const params = [];
 
-		if (inputNodes && inputNodes.__proto__ == {}.__proto__) {
-			for ( const name in inputNodes ) {
-				inputIds[name] = inputNodes[name].uuid;
-			}
+		if ( inputNodes && inputNodes.__proto__ == {}.__proto__ ) {
+
+			const names = Object.keys( inputNodes ).sort();
+
+			names.forEach( name => {
+
+				params.push( `${name}: ${inputNodes[ name ].uuid}` );
+
+			} );
+
 		}
 
-		this.uuid = `${shaderNode.uuid}(${JSON.stringify(inputIds)})`;
+		this.uuid = `${shaderNode.uuid}(  ${params.join( ', ' )} )`;
 
 	}
 
@@ -538,9 +544,9 @@ export const Fn = ( jsFunc, nodeType ) => {
 		}
 
 		const id = (
-			(Date.now() % 10000000) +
-			Math.ceil(Math.random() * 100000)
-		  ).toString(36);
+			( Date.now() % 10000000 ) +
+			Math.ceil( Math.random() * 100000 )
+		  ).toString( 36 );
 
 		shaderNode.uuid = 'Fn_' + id;
 
