@@ -330,11 +330,6 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 	}
 
-	getOutputStructName() {
-
-		return 'output';
-
-	}
 
 	_getUniformGroupCount( shaderStage ) {
 
@@ -789,26 +784,6 @@ ${ flowData.code }
 
 	}
 
-	getStructMembers( struct ) {
-
-		const snippets = [];
-		const members = struct.getMemberTypes();
-
-		for ( let i = 0; i < members.length; i ++ ) {
-
-			const member = members[ i ];
-			snippets.push( `\t@location( ${i} ) m${i} : ${ member }<f32>` );
-
-		}
-
-		const builtins = this.getBuiltins( 'output' );
-
-		if ( builtins ) snippets.push( '\t' + builtins );
-
-		return snippets.join( ',\n' );
-
-	}
-
 	getStructs( shaderStage ) {
 
 		const snippets = [];
@@ -816,17 +791,23 @@ ${ flowData.code }
 
 		for ( let index = 0, length = structs.length; index < length; index ++ ) {
 
-			const struct = structs[ index ];
-			const name = struct.name;
+			const layout = structs[ index ].structLayout;
 
-			let snippet = `\struct ${ name } {\n`;
-			snippet += this.getStructMembers( struct );
-			snippet += '\n}';
+			const name = structs[ index ].structName;
+		
+			
 
+			const members = [];
 
-			snippets.push( snippet );
+			for (const name in layout) {
 
-			snippets.push( `\nvar<private> output : ${ name };\n\n` );
+				members.push(`\t${name}: ${ this.getType( layout[name] ) }`);
+
+			}
+			
+			const snippet = `struct ${ name } {\n${ members.join( ',\n' ) }\n};`;
+
+			snippets.push( snippet );			
 
 		}
 
@@ -1189,11 +1170,11 @@ fn main( ${shaderData.attributes} ) -> VaryingsStruct {
 // global
 ${ diagnostics }
 
-// uniforms
-${shaderData.uniforms}
-
 // structs
 ${shaderData.structs}
+
+// uniforms
+${shaderData.uniforms}
 
 // codes
 ${shaderData.codes}

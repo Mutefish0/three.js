@@ -834,9 +834,9 @@ class NodeBuilder {
 
 		if ( nodeData.structType === undefined ) {
 
-			const index = this.structs.index ++;
+			//const index = this.structs.index ++;
 
-			node.name = `StructType${ index }`;
+			//node.name = `StructType${ index }`;
 			this.structs[ shaderStage ].push( node );
 
 			nodeData.structType = node;
