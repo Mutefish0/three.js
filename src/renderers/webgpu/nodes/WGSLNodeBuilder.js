@@ -681,7 +681,7 @@ ${flowData.code}
 		const structs = this.structs[shaderStage];
 
 		for (let index = 0, length = structs.length; index < length; index++) {
-			const layout = structs[index].structLayout;
+			const layout = structs[index].members;
 
 			const name = structs[index].structName;
 
