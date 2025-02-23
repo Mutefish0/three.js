@@ -778,9 +778,14 @@ ${flowData.code}
 			const groupName = uniform.groupNode.name;
 			const uniformIndexes = this.bindingsIndexes[groupName];
 
-			if (uniform.type === "texture") {
+			if (typeof uniform.type !== "string") {
+				if (uniform.type.structName) {
+					bindingSnippets.push(
+						`@binding( ${layout.binding} ) @group( ${layout.group} ) var<uniform> ${uniform.name} : ${uniform.type.structName};`
+					);
+				}
+			} else if (uniform.type.startsWith("texture")) {
 				const textureValue = uniform.node.value;
-
 				bindingSnippets.push(
 					`@binding( ${layout.binding} ) @group( ${layout.group} ) var ${uniform.name} : ${textureValue.shaderType};`
 				);
