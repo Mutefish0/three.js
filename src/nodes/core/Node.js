@@ -10,9 +10,6 @@ const MathUtils = {
 };
 
 let _nodeId = 0;
-
-export const globalNodes = {};
-
 class Node {
 	static get type() {
 		return "Node";
@@ -266,14 +263,6 @@ class Node {
 		builder.removeChain(this);
 
 		return result;
-	}
-
-	toString() {
-		if (!this.gid) {
-			this.gid = MathUtils.generateUUID();
-		}
-		globalNodes[this.gid] = this;
-		return this.gid;
 	}
 }
 

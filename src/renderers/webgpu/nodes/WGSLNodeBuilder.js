@@ -779,9 +779,24 @@ ${flowData.code}
 			const uniformIndexes = this.bindingsIndexes[groupName];
 
 			if (typeof uniform.type !== "string") {
-				if (uniform.type.structName) {
+				if (uniform.type.type === "struct") {
+					const { structName } = uniform.type;
 					bindingSnippets.push(
-						`@binding( ${layout.binding} ) @group( ${layout.group} ) var<uniform> ${uniform.name} : ${uniform.type.structName};`
+						`@binding( ${layout.binding} ) @group( ${layout.group} ) var<uniform> ${uniform.name} : ${structName};`
+					);
+				} else if (uniform.type.type === "array") {
+					const { arraySize, elementType } = uniform.type;
+					let elType = "";
+					if (typeof elementType !== "string") {
+						if (elementType.type === "struct") {
+							elType = elementType.structName;
+						}
+					} else {
+						elType = this.getType(elementType);
+					}
+
+					bindingSnippets.push(
+						`@binding( ${layout.binding} ) @group( ${layout.group} ) var<uniform> ${uniform.name} : array<${elType}, ${arraySize}>;`
 					);
 				}
 			} else if (uniform.type.startsWith("texture")) {
