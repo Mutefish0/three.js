@@ -1003,6 +1003,9 @@ ${flowData.code}
 // directives
 ${shaderData.directives}
 
+// structs
+${shaderData.structs}
+
 // uniforms
 ${shaderData.uniforms}
 
