@@ -364,20 +364,7 @@ class WGSLNodeBuilder extends NodeBuilder {
 
 			const visibility = gpuShaderStageLib[shaderStage];
 
-			if (type === "texture") {
-				const textureGPU = {
-					name: node.name,
-					type,
-					visibility,
-					isTexture: true,
-					node,
-					groupNode: {
-						shared: false,
-					},
-				};
-
-				bindings.push(textureGPU);
-			} else if (type === "sampler") {
+			if (type === "sampler") {
 				const samplerGPU = {
 					name: node.name,
 					type,
