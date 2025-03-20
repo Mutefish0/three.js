@@ -20,6 +20,10 @@ class VarNode extends Node {
 
 		this.isVarNode = true;
 
+		if (node.structType) {
+			this.structType = node.structType;
+		}
+
 	}
 
 	getHash( builder ) {
