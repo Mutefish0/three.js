@@ -741,24 +741,45 @@ class NodeBuilder {
 		return nodeUniform;
 	}
 
+	/**
+	 * Returns an instance of {@link NodeVar} for the given variable node.
+	 *
+	 * @param {VarNode} node - The variable node.
+	 * @param {String?} name - The variable's name.
+	 * @param {String} [type=node.getNodeType( this )] - The variable's type.
+	 * @param {('vertex'|'fragment'|'compute'|'any')} [shaderStage=this.shaderStage] - The shader stage.
+	 * @param {Boolean} [readOnly=false] - Whether the variable is read-only or not.
+	 *
+	 * @return {NodeVar} The node variable.
+	 */
 	getVarFromNode(
 		node,
 		name = null,
 		type = node.getNodeType(this),
-		shaderStage = this.shaderStage
+		shaderStage = this.shaderStage,
+		readOnly = false
 	) {
 		const nodeData = this.getDataFromNode(node, shaderStage);
 
 		let nodeVar = nodeData.variable;
 
 		if (nodeVar === undefined) {
+			const idNS = readOnly ? "_const" : "_var";
+
 			const vars = this.vars[shaderStage] || (this.vars[shaderStage] = []);
+			const id = this.vars[idNS] || (this.vars[idNS] = 0);
 
-			if (name === null) name = "nodeVar" + vars.length;
+			if (name === null) {
+				name = (readOnly ? "nodeConst" : "nodeVar") + id;
 
-			nodeVar = new NodeVar(name, type);
+				this.vars[idNS]++;
+			}
 
-			vars.push(nodeVar);
+			nodeVar = new NodeVar(name, type, readOnly);
+
+			if (!readOnly) {
+				vars.push(nodeVar);
+			}
 
 			nodeData.variable = nodeVar;
 		}
