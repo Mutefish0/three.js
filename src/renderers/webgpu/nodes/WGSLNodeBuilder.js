@@ -308,6 +308,15 @@ class WGSLNodeBuilder extends NodeBuilder {
 		return super.getPropertyName(node);
 	}
 
+	/**
+	 * Returns the output struct name.
+	 *
+	 * @return {string} The name of the output struct.
+	 */
+	getOutputStructName() {
+		return "output";
+	}
+
 	getFunctionOperator(op) {
 		const fnOp = wgslFnOpLib[op];
 
@@ -672,10 +681,18 @@ ${flowData.code}
 
 			const name = structs[index].structName;
 
+			const isOutput = structs[index].isOutput;
+
 			const members = [];
 
 			for (const name in layout) {
-				members.push(`\t${name}: ${this.getType(layout[name])}`);
+				members.push(
+					isOutput
+						? `\t@location(${members.length}) ${name}: ${this.getType(
+								layout[name]
+						  )}`
+						: `\t${name}: ${this.getType(layout[name])}`
+				);
 			}
 
 			const snippet = `struct ${name} {\n${members.join(",\n")}\n};`;
@@ -897,8 +914,8 @@ ${flowData.code}
 						flow += `varyings.Vertex = ${flowSlotData.result};`;
 					} else if (shaderStage === "fragment") {
 						if (isOutputStruct) {
-							stageData.returnType = outputNode.nodeType;
-
+							stageData.returnType = outputNode.structType.structName;
+							stageData.structs += "\nvar<private> output : OutputStruct;\n\n";
 							flow += `return ${flowSlotData.result};`;
 						} else {
 							let structSnippet = "\t@location(0) color: vec4<f32>";
