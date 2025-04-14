@@ -248,23 +248,6 @@ class WGSLNodeBuilder extends NodeBuilder {
 		}
 	}
 
-	generateTextureCompare(
-		texture,
-		textureProperty,
-		uvSnippet,
-		compareSnippet,
-		depthSnippet,
-		shaderStage = this.shaderStage
-	) {
-		if (shaderStage === "fragment") {
-			return `textureSampleCompare( ${textureProperty}, ${textureProperty}_sampler, ${uvSnippet}, ${compareSnippet} )`;
-		} else {
-			console.error(
-				`WebGPURenderer: THREE.DepthTexture.compareFunction() does not support ${shaderStage} shader.`
-			);
-		}
-	}
-
 	generateTextureBias(
 		texture,
 		textureProperty,
@@ -810,7 +793,7 @@ ${flowData.code}
 				);
 			} else if (uniform.type === "sampler") {
 				bindingSnippets.push(
-					`@binding( ${layout.binding} ) @group( ${layout.group} ) var ${uniform.name} : ${uniform.node.samplerType};`
+					`@binding( ${layout.binding} ) @group( ${layout.group} ) var ${uniform.name} : ${uniform.node.samplerShaderType};`
 				);
 			} else if (
 				uniform.type === "buffer" ||
