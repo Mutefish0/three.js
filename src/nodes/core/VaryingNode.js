@@ -95,3 +95,4 @@ export default VaryingNode;
 export const varying = /*@__PURE__*/ nodeProxy(VaryingNode);
 
 addMethodChaining("varying", varying);
+addMethodChaining("toVarying", varying);
