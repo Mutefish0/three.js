@@ -14,6 +14,8 @@ class VaryingNode extends Node {
 		this.name = name;
 
 		this.isVaryingNode = true;
+
+		this.uuid = `varying( ${node.uuid} )`;
 	}
 
 	isGlobal() {

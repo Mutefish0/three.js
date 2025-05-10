@@ -44,6 +44,15 @@ class VarNode extends Node {
 		 */
 		this.name = name;
 
+		const params = [];
+		if (name) {
+			params.push(name);
+		}
+		params.push(node.uuid);
+		this.uuid = readOnly
+			? `const(${params.join(",")})`
+			: `var(${params.join(",")})`;
+
 		/**
 		 * `VarNode` sets this property to `true` by default.
 		 *

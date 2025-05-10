@@ -1,115 +1,99 @@
-import CodeNode from './CodeNode.js';
-import { nodeObject } from '../tsl/TSLBase.js';
+import CodeNode from "./CodeNode.js";
+import { nodeObject } from "../tsl/TSLBase.js";
 
 class FunctionNode extends CodeNode {
-
 	static get type() {
-
-		return 'FunctionNode';
-
+		return "FunctionNode";
 	}
 
-	constructor( code = '', includes = [], language = '' ) {
+	constructor(code = "", includes = [], language = "") {
+		super(code, includes, language);
 
-		super( code, includes, language );
-
+		if (language === "wgsl") {
+			const fnNameMatch = code.match(/fn\s+([a-zA-Z_]\w*)\s*\(/);
+			const fnName = fnNameMatch
+				? fnNameMatch[1]
+				: "fn_" +
+				  (
+						(Date.now() % 10000000) +
+						Math.ceil(Math.random() * 100000)
+				  ).toString(36);
+			this.uuid = fnName;
+		}
 	}
 
-	getNodeType( builder ) {
-
-		return this.getNodeFunction( builder ).type;
-
+	getNodeType(builder) {
+		return this.getNodeFunction(builder).type;
 	}
 
-	getInputs( builder ) {
-
-		return this.getNodeFunction( builder ).inputs;
-
+	getInputs(builder) {
+		return this.getNodeFunction(builder).inputs;
 	}
 
-	getNodeFunction( builder ) {
-
-		const nodeData = builder.getDataFromNode( this );
+	getNodeFunction(builder) {
+		const nodeData = builder.getDataFromNode(this);
 
 		let nodeFunction = nodeData.nodeFunction;
 
-		if ( nodeFunction === undefined ) {
-
-			nodeFunction = builder.parser.parseFunction( this.code );
+		if (nodeFunction === undefined) {
+			nodeFunction = builder.parser.parseFunction(this.code);
 
 			nodeData.nodeFunction = nodeFunction;
-
 		}
 
 		return nodeFunction;
-
 	}
 
-	generate( builder, output ) {
+	generate(builder, output) {
+		super.generate(builder);
 
-		super.generate( builder );
-
-		const nodeFunction = this.getNodeFunction( builder );
+		const nodeFunction = this.getNodeFunction(builder);
 
 		const name = nodeFunction.name;
 		const type = nodeFunction.type;
 
-		const nodeCode = builder.getCodeFromNode( this, type );
+		const nodeCode = builder.getCodeFromNode(this, type);
 
-		if ( name !== '' ) {
-
+		if (name !== "") {
 			// use a custom property name
 
 			nodeCode.name = name;
-
 		}
 
-		const propertyName = builder.getPropertyName( nodeCode );
+		const propertyName = builder.getPropertyName(nodeCode);
 
-		const code = this.getNodeFunction( builder ).getCode( propertyName );
+		const code = this.getNodeFunction(builder).getCode(propertyName);
 
-		nodeCode.code = code + '\n';
+		nodeCode.code = code + "\n";
 
-		if ( output === 'property' ) {
-
+		if (output === "property") {
 			return propertyName;
-
 		} else {
-
-			return builder.format( `${ propertyName }()`, type, output );
-
+			return builder.format(`${propertyName}()`, type, output);
 		}
-
 	}
-
 }
 
 export default FunctionNode;
 
-const nativeFn = ( code, includes = [], language = '' ) => {
-
-	for ( let i = 0; i < includes.length; i ++ ) {
-
-		const include = includes[ i ];
+const nativeFn = (code, includes = [], language = "") => {
+	for (let i = 0; i < includes.length; i++) {
+		const include = includes[i];
 
 		// TSL Function: glslFn, wgslFn
 
-		if ( typeof include === 'function' ) {
-
-			includes[ i ] = include.functionNode;
-
+		if (typeof include === "function") {
+			includes[i] = include.functionNode;
 		}
-
 	}
 
-	const functionNode = nodeObject( new FunctionNode( code, includes, language ) );
+	const functionNode = nodeObject(new FunctionNode(code, includes, language));
 
-	const fn = ( ...params ) => functionNode.call( ...params );
+	const fn = (...params) => functionNode.call(...params);
 	fn.functionNode = functionNode;
 
 	return fn;
-
 };
 
-export const glslFn = ( code, includes ) => nativeFn( code, includes, 'glsl' );
-export const wgslFn = ( code, includes ) => nativeFn( code, includes, 'wgsl' );
+export const glslFn = (code, includes) => nativeFn(code, includes, "glsl");
+export const wgslFn = (code, includes) => nativeFn(code, includes, "wgsl");
