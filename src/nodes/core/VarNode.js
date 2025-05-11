@@ -3,6 +3,8 @@ import { addMethodChaining, nodeProxy } from "../tsl/TSLCore.js";
 
 /** @module VarNode **/
 
+let varId = 0;
+
 /**
  * Class for representing shader variables as nodes. Variables are created from
  * existing nodes like the following:
@@ -49,9 +51,10 @@ class VarNode extends Node {
 			params.push(name);
 		}
 		params.push(node.uuid);
+
 		this.uuid = readOnly
-			? `const(${params.join(",")})`
-			: `var(${params.join(",")})`;
+			? `const_${varId++}(${params.join(",")})`
+			: `var_${varId++}(${params.join(",")})`;
 
 		/**
 		 * `VarNode` sets this property to `true` by default.
