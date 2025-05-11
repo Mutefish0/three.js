@@ -46,9 +46,15 @@ class ConditionalNode extends Node {
 
 		const properties = builder.getNodeProperties(this);
 		properties.condNode = condNode;
-		properties.ifNode = ifNode.context({ nodeBlock: ifNode });
+		properties.ifNode = ifNode.context({
+			nodeBlock: ifNode,
+			blockShaderStage: builder.shaderStage,
+		});
 		properties.elseNode = elseNode
-			? elseNode.context({ nodeBlock: elseNode })
+			? elseNode.context({
+					nodeBlock: elseNode,
+					blockShaderStage: builder.shaderStage,
+			  })
 			: null;
 	}
 
@@ -82,12 +88,12 @@ class ConditionalNode extends Node {
 		// 直到这个 issue 被官方解决：
 		// https://github.com/mrdoob/three.js/issues/31078
 		if (blockNode) {
-			// builder.addFlowCode(`\n${builder.tab}{\n\n`).addFlowTab();
+			//builder.addFlowCode(`\n${builder.tab}{\n\n`).addFlowTab();
 			let bodySnippet = blockNode.build(builder, type);
 			builder
 				//.removeFlowTab()
 				.addFlowCode(builder.tab + "\t" + bodySnippet + "\n");
-			// builder.addFlowCode(builder.tab + "}\n\n");
+			//builder.addFlowCode(builder.tab + "}\n\n");
 		} else {
 			const nodeSnippet = condNode.build(builder, "bool");
 

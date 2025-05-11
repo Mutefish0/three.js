@@ -827,7 +827,7 @@ class NodeBuilder {
 		return nodeCode;
 	}
 
-	addFlowCodeHierarchy(node, nodeBlock) {
+	addFlowCodeHierarchy(node, nodeBlock, blockShaderStage) {
 		const { flowCodes, flowCodeBlock } = this.getDataFromNode(node);
 
 		let needsFlowCode = true;
@@ -839,8 +839,10 @@ class NodeBuilder {
 				break;
 			}
 
-			nodeBlockHierarchy =
-				this.getDataFromNode(nodeBlockHierarchy).parentNodeBlock;
+			nodeBlockHierarchy = this.getDataFromNode(
+				nodeBlockHierarchy,
+				blockShaderStage
+			).parentNodeBlock;
 		}
 
 		if (needsFlowCode) {

@@ -251,7 +251,11 @@ class Node {
 					nodeData.flowCodes !== undefined &&
 					builder.context.nodeBlock !== undefined
 				) {
-					builder.addFlowCodeHierarchy(this, builder.context.nodeBlock);
+					builder.addFlowCodeHierarchy(
+						this,
+						builder.context.nodeBlock,
+						builder.context.blockShaderStage
+					);
 				}
 
 				result = builder.format(result, type, output);
