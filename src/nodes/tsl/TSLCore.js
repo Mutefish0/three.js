@@ -525,6 +525,8 @@ export const getCurrentStack = () => currentStack;
 
 export const If = (...params) => currentStack.If(...params);
 
+export const Block = (...params) => currentStack.Block(...params);
+
 export function append(node) {
 	if (currentStack) currentStack.add(node);
 

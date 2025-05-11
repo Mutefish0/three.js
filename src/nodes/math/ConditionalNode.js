@@ -1,48 +1,35 @@
-import Node from '../core/Node.js';
-import { property } from '../core/PropertyNode.js';
-import { addMethodChaining, nodeProxy } from '../tsl/TSLCore.js';
+import Node from "../core/Node.js";
+import { property } from "../core/PropertyNode.js";
+import { addMethodChaining, nodeProxy } from "../tsl/TSLCore.js";
 
 class ConditionalNode extends Node {
-
 	static get type() {
-
-		return 'ConditionalNode';
-
+		return "ConditionalNode";
 	}
 
-	constructor( condNode, ifNode, elseNode = null ) {
-
+	constructor(condNode, ifNode, elseNode = null) {
 		super();
 
 		this.condNode = condNode;
-
 		this.ifNode = ifNode;
 		this.elseNode = elseNode;
-
 	}
 
-	getNodeType( builder ) {
+	getNodeType(builder) {
+		const ifType = this.ifNode.getNodeType(builder);
 
-		const ifType = this.ifNode.getNodeType( builder );
+		if (this.elseNode !== null) {
+			const elseType = this.elseNode.getNodeType(builder);
 
-		if ( this.elseNode !== null ) {
-
-			const elseType = this.elseNode.getNodeType( builder );
-
-			if ( builder.getTypeLength( elseType ) > builder.getTypeLength( ifType ) ) {
-
+			if (builder.getTypeLength(elseType) > builder.getTypeLength(ifType)) {
 				return elseType;
-
 			}
-
 		}
 
 		return ifType;
-
 	}
 
-	setup( builder ) {
-
+	setup(builder) {
 		const condNode = this.condNode.cache();
 		const ifNode = this.ifNode.cache();
 		const elseNode = this.elseNode ? this.elseNode.cache() : null;
@@ -51,106 +38,119 @@ class ConditionalNode extends Node {
 
 		const currentNodeBlock = builder.context.nodeBlock;
 
-		builder.getDataFromNode( ifNode ).parentNodeBlock = currentNodeBlock;
-		if ( elseNode !== null ) builder.getDataFromNode( elseNode ).parentNodeBlock = currentNodeBlock;
+		builder.getDataFromNode(ifNode).parentNodeBlock = currentNodeBlock;
+		if (elseNode !== null)
+			builder.getDataFromNode(elseNode).parentNodeBlock = currentNodeBlock;
 
 		//
 
-		const properties = builder.getNodeProperties( this );
+		const properties = builder.getNodeProperties(this);
 		properties.condNode = condNode;
-		properties.ifNode = ifNode.context( { nodeBlock: ifNode } );
-		properties.elseNode = elseNode ? elseNode.context( { nodeBlock: elseNode } ) : null;
-
+		properties.ifNode = ifNode.context({ nodeBlock: ifNode });
+		properties.elseNode = elseNode
+			? elseNode.context({ nodeBlock: elseNode })
+			: null;
 	}
 
-	generate( builder, output ) {
+	generate(builder, output) {
+		const type = this.getNodeType(builder);
 
-		const type = this.getNodeType( builder );
+		const nodeData = builder.getDataFromNode(this);
 
-		const nodeData = builder.getDataFromNode( this );
-
-		if ( nodeData.nodeProperty !== undefined ) {
-
+		if (nodeData.nodeProperty !== undefined) {
 			return nodeData.nodeProperty;
-
 		}
 
-		const { condNode, ifNode, elseNode } = builder.getNodeProperties( this );
+		const { condNode, ifNode, elseNode } = builder.getNodeProperties(this);
 
-		const needsOutput = output !== 'void';
-		const nodeProperty = needsOutput ? property( type ).build( builder ) : '';
+		let blockNode;
+
+		if (this.condNode.isConstNode) {
+			if (this.condNode.value) {
+				blockNode = ifNode;
+			} else {
+				blockNode = elseNode;
+			}
+		}
+
+		const needsOutput = output !== "void";
+		const nodeProperty = needsOutput ? property(type).build(builder) : "";
 
 		nodeData.nodeProperty = nodeProperty;
 
-		const nodeSnippet = condNode.build( builder, 'bool' );
+		// 这里暂时不用Block包裹，直接提升变量
+		// 直到这个 issue 被官方解决：
+		// https://github.com/mrdoob/three.js/issues/31078
+		if (blockNode) {
+			// builder.addFlowCode(`\n${builder.tab}{\n\n`).addFlowTab();
+			let bodySnippet = blockNode.build(builder, type);
+			builder
+				//.removeFlowTab()
+				.addFlowCode(builder.tab + "\t" + bodySnippet + "\n");
+			// builder.addFlowCode(builder.tab + "}\n\n");
+		} else {
+			const nodeSnippet = condNode.build(builder, "bool");
 
-		builder.addFlowCode( `\n${ builder.tab }if ( ${ nodeSnippet } ) {\n\n` ).addFlowTab();
+			builder
+				.addFlowCode(`\n${builder.tab}if ( ${nodeSnippet} ) {\n\n`)
+				.addFlowTab();
 
-		let ifSnippet = ifNode.build( builder, type );
+			let ifSnippet = ifNode.build(builder, type);
 
-		if ( ifSnippet ) {
-
-			if ( needsOutput ) {
-
-				ifSnippet = nodeProperty + ' = ' + ifSnippet + ';';
-
-			} else {
-
-				ifSnippet = 'return ' + ifSnippet + ';';
-
+			if (ifSnippet) {
+				if (needsOutput) {
+					ifSnippet = nodeProperty + " = " + ifSnippet + ";";
+				} else {
+					ifSnippet = "return " + ifSnippet + ";";
+				}
 			}
 
-		}
+			builder
+				.removeFlowTab()
+				.addFlowCode(
+					builder.tab + "\t" + ifSnippet + "\n\n" + builder.tab + "}"
+				);
 
-		builder.removeFlowTab().addFlowCode( builder.tab + '\t' + ifSnippet + '\n\n' + builder.tab + '}' );
+			if (elseNode !== null) {
+				builder.addFlowCode(" else {\n\n").addFlowTab();
 
-		if ( elseNode !== null ) {
+				let elseSnippet = elseNode.build(builder, type);
 
-			builder.addFlowCode( ' else {\n\n' ).addFlowTab();
-
-			let elseSnippet = elseNode.build( builder, type );
-
-			if ( elseSnippet ) {
-
-				if ( needsOutput ) {
-
-					elseSnippet = nodeProperty + ' = ' + elseSnippet + ';';
-
-				} else {
-
-					elseSnippet = 'return ' + elseSnippet + ';';
-
+				if (elseSnippet) {
+					if (needsOutput) {
+						elseSnippet = nodeProperty + " = " + elseSnippet + ";";
+					} else {
+						elseSnippet = "return " + elseSnippet + ";";
+					}
 				}
 
+				builder
+					.removeFlowTab()
+					.addFlowCode(
+						builder.tab + "\t" + elseSnippet + "\n\n" + builder.tab + "}\n\n"
+					);
+			} else {
+				builder.addFlowCode("\n\n");
 			}
-
-			builder.removeFlowTab().addFlowCode( builder.tab + '\t' + elseSnippet + '\n\n' + builder.tab + '}\n\n' );
-
-		} else {
-
-			builder.addFlowCode( '\n\n' );
-
 		}
 
-		return builder.format( nodeProperty, type, output );
-
+		return builder.format(nodeProperty, type, output);
 	}
-
 }
 
 export default ConditionalNode;
 
-export const select = /*@__PURE__*/ nodeProxy( ConditionalNode );
+export const select = /*@__PURE__*/ nodeProxy(ConditionalNode);
 
-addMethodChaining( 'select', select );
+addMethodChaining("select", select);
 
 //
 
-export const cond = ( ...params ) => { // @deprecated, r168
+export const cond = (...params) => {
+	// @deprecated, r168
 
-	console.warn( 'TSL.ConditionalNode: cond() has been renamed to select().' );
-	return select( ...params );
-
+	console.warn("TSL.ConditionalNode: cond() has been renamed to select().");
+	return select(...params);
 };
 
-addMethodChaining( 'cond', cond );
+addMethodChaining("cond", cond);
